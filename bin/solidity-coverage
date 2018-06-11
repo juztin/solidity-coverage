@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# Starts a solidity-coverage instance within the current directory.
+# If the instance is already started, the command is executed within the currently running container.
+#
+# eg.
+#
+#   To run solidity-coverage against your project
+#   ```
+#    % solidity-coverage
+#   ```
+#
+# To run a container and drop into the shell (no Truffle command) pass in `shell` as the first argument.
+#
+#   ```
+#    % solidity-coverage shell
+#   ```
+#
+
+IMAGE="minty/solidity-coverage"
+if [ -n "$SOLIDITY_COVERAGE_VERSION" ];then
+	IMAGE="$IMAGE:$SOLIDITY_COVERAGE_VERSION"
+fi
+
+
+start() {
+CMD="$IMAGE $@"
+if [ $IS_SHELL = true ]; then
+	OPTS="--entrypoint /bin/sh"
+	CMD="$IMAGE"
+fi
+
+docker run \
+	-it \
+	$OPTS \
+	--rm \
+	--name $CONTAINER_NAME \
+	--volume "$(pwd)":/src \
+	$CMD
+}
+
+exec() {
+docker exec \
+	-w /src \
+	$CONTAINER_NAME "$@"
+}
+
+
+CONTAINER_NAME="solidity_coverage_"${PWD##*/}
+IS_RUNNING=$(docker ps -f "name=$CONTAINER_NAME" --format '{{.Names}}')
+IS_SHELL=false
+
+if [[ -z "$IS_RUNNING" ]]; then
+	echo "Starting container: $CONTAINER_NAME"
+	if [ "$1" == "shell" ]; then
+		IS_SHELL=true
+	fi
+	start "$@"
+else
+	echo "Executing in container: $CONTAINER_NAME"
+	exec "$@"
+fi
