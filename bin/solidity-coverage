@@ -17,7 +17,7 @@
 #   ```
 #
 
-IMAGE="minty/solidity-coverage"
+IMAGE="minty/solidity-coverage:junit"
 if [ -n "$SOLIDITY_COVERAGE_VERSION" ];then
 	IMAGE="$IMAGE:$SOLIDITY_COVERAGE_VERSION"
 fi
